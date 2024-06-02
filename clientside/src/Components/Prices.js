@@ -1,47 +1,55 @@
 import { CheckBadgeIcon } from "@heroicons/react/24/outline";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 
 const Prices = () => {
   const navigate = useNavigate();
-  let [packageDetails, setPackageDetails] = useState({id: ''});
+  const [packageDetails, setPackageDetails] = useState({ id: 0, quantity: 0 });
+  const [triggerPost, setTriggerPost] = useState(false); // to trigger the post request
 
-  let endPointUrl = 'http://localhost:5000/createCheckoutSession'
+  const endPointUrl = 'http://localhost:5000/createCheckoutSession';
 
-  const postPackageData = () => {
-    fetch(endPointUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(packageDetails)
-    }).then(response => {
-      if (response.ok) {
-        return response.json()
-      }
-      return response.json().then(json => Promise.reject(json));
-    }).then(({ url }) => {
-      navigate(url);
-    })
-    .catch(err => {
-      console.log('An Error Occured:' + err);
-    });
-  }
+  useEffect(() => {
+    if (triggerPost) {
+      fetch(endPointUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ plan: packageDetails })
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        return response.json().then(json => Promise.reject(json));
+      })
+      .then(({ url }) => {
+        window.location.href = url;
+      })
+      .catch(err => {
+        console.log('An Error Occurred:', err.error);
+      })
+      .finally(() => {
+        setTriggerPost(false); // Reset the trigger
+      });
+    }
+  }, [triggerPost, packageDetails, navigate, endPointUrl]);
 
   const handleFreeTrialPackage = () => {
-    setPackageDetails({id: 'Package1'});
-    postPackageData();
-  }
+    setPackageDetails({ id: 1, quantity: 1 });
+    setTriggerPost(true); // Trigger the post request
+  };
 
   const handlePremiumPackage = () => {
-    setPackageDetails({id: 'Package2'});
-    postPackageData();
-  }
+    setPackageDetails({ id: 2, quantity: 1 });
+    setTriggerPost(true); // Trigger the post request
+  };
 
   const handleCorporatePackage = () => {
-    setPackageDetails({id: 'Package3'});
-    postPackageData();
-  }
+    setPackageDetails({ id: 3, quantity: 1 });
+    setTriggerPost(true); // Trigger the post request
+  };
 
   return (
     <section className="w-full px-4">
@@ -80,7 +88,7 @@ const Prices = () => {
                 <div className="flex items-baseline gap-x-2 mt-2 mb-6">
                   <span className="text-4xl font-bold tracking-tight text-slate-700 dark:text-white">
                     {" "}
-                    $12{" "}
+                    $19{" "}
                   </span>
                   <span className="text-sm font-semibold leading-6 tracking-wide text-slate-500 dark:text-slate-400">
                     {" "}
@@ -132,7 +140,7 @@ const Prices = () => {
                 <div className="flex items-baseline gap-x-2 mt-2 mb-6">
                   <span className="text-4xl font-bold tracking-tight text-slate-700 dark:text-white">
                     {" "}
-                    $99{" "}
+                    $100{" "}
                   </span>
                   <span className="text-sm font-semibold leading-6 tracking-wide text-slate-500 dark:text-slate-400">
                     {" "}

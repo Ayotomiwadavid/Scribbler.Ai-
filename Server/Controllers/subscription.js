@@ -1,25 +1,50 @@
-require('dotenv').config()
-let stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-let userSubPlan;
+require('dotenv').config();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-let subscriptionMap = new Map([
-    [1, {priceInCent: 1900, name: 'Premium Package', PackageInterval: '1mon'}],
-    [2, {priceInCent: 10000, name: 'Coporate Package', PackageInterval: '1y'}]
-])
+const subscriptionMap = new Map([
+    [1, { priceInCent: 0, name: 'Free Trial Package', interval: 'month' }],
+    [2, { priceInCent: 1900, name: 'Premium Package', interval: 'month' }],
+    [3, { priceInCent: 10000, name: 'Corporate Package', interval: 'year' }]
+]);
 
-const FreeTrial = () => {
+const subscribeToAPlan = async (req, res, next) => {
+    try {
+        const subscriptionDetails = req.body;
+        let { plan } = subscriptionDetails;
+        console.log('Received subscription details:', subscriptionDetails);
+
+        const planId = parseInt(plan.id, 10);
+        const subscriptionPlan = subscriptionMap.get(planId);
+
+        if (!subscriptionPlan) {
+            throw new Error(`No subscription plan found for id: ${plan.id}`);
+        }
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            mode: 'subscription',
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: subscriptionPlan.name,
+                    },
+                    unit_amount: subscriptionPlan.priceInCent,
+                    recurring: {
+                        interval: subscriptionPlan.interval,
+                    }
+                },
+                quantity: plan.quantity
+            }],
+            success_url: process.env.SUCCESS_URL,
+            cancel_url: process.env.CANCEL_URL
+        });
+
+        res.json({ url: session.url });
+    } catch (error) {
+        console.error('Error during subscription process:', error.message);
+        res.status(500).json({ error: error.message });
+    }
 };
 
-const premiumPackage = () => {
-}
-
-const corporatePackage = () => {}
-
-const subscribeToAPlan = (req, res, next) => {
-    const subscriptionDetails = req.body;
-    let {id} = subscriptionDetails;
-    userSubPlan = id
-        console.log(id);
-};
-
-module.exports = {subscribeToAPlan}
+module.exports = { subscribeToAPlan };
