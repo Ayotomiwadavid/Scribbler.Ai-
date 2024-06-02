@@ -10,7 +10,12 @@ const Pricing = () => {
   return (
     <div className='w-full flex flex-col items-center justify-center'>
     <Header />
-    <Breadcrumbs />
+    <Breadcrumbs 
+        currentPageName= 'pricing'
+        previousPage='Home'
+        currentPage='pricing'
+        previousPageUrl='/'
+    />
     <Prices />
     <Faq />
     <LatCTA />
